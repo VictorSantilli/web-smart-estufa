@@ -2,7 +2,7 @@
 # Build: docker build -t smart-estufa-web .
 
 # ---------- 1. Build do frontend ----------
-FROM node:22-alpine AS frontend
+FROM node:26-alpine AS frontend
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
