@@ -28,7 +28,8 @@ services:
       DB_NAME: ${DEV_DB_NAME:-SmartEstufaDev}
     volumes:
       - ./database:/database:ro
-    entrypoint: ["sh", "/database/dev/init-db.sh"]
+    # tr remove o \r do fim das linhas caso o arquivo tenha vindo do Windows com CRLF.
+    entrypoint: ["sh", "-c", "tr -d '\\r' < /database/dev/init-db.sh | sh"]
     restart: "no"
 
   backend:
