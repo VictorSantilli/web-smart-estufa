@@ -46,5 +46,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -fsS http://localhost:${PORT}/api/health || exit 1
 
-# --proxy-headers: o Container Apps termina o HTTPS e repassa X-Forwarded-*
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers ${WEB_CONCURRENCY:-2} --proxy-headers --forwarded-allow-ips='*'"]
+# O IP real do cliente é lido do X-Forwarded-For pela aplicação (TRUSTED_PROXY_HOPS).
+# Não usamos --forwarded-allow-ips='*': com ele o Uvicorn confia na primeira entrada do
+# cabeçalho, que o próprio cliente pode forjar para escapar do limite de login por IP.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers ${WEB_CONCURRENCY:-2}"]

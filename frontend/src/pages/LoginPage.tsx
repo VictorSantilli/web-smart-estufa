@@ -8,7 +8,7 @@ import { TextField } from '@/components/ui/TextField';
 import { useAuth } from '@/hooks/useAuth';
 import { toApiError } from '@/services/api';
 import { paths } from '@/routes/paths';
-import { validateLogin, type LoginFieldErrors } from '@/utils/validation';
+import { safeRedirectPath, validateLogin, type LoginFieldErrors } from '@/utils/validation';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -30,8 +30,8 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      const from = (location.state as { from?: string } | null)?.from;
-      navigate(from && from !== paths.login ? from : paths.dashboard, { replace: true });
+      const from = safeRedirectPath((location.state as { from?: unknown } | null)?.from, paths.dashboard);
+      navigate(from === paths.login ? paths.dashboard : from, { replace: true });
     } catch (error) {
       setFormError(toApiError(error).message);
       setPassword('');

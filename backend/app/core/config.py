@@ -21,7 +21,8 @@ class Settings(BaseSettings):
     app_env: Literal["development", "test", "production"] = "development"
     app_version: str = "0.1.0"
     api_prefix: str = "/api"
-    enable_docs: bool = True
+    # Swagger em /api/docs. Sem valor definido: ligado fora de produção, desligado em produção.
+    enable_docs: bool | None = None
     log_level: str = "INFO"
 
     # Banco de dados (Azure SQL / SQL Server via pyodbc)
@@ -35,7 +36,7 @@ class Settings(BaseSettings):
 
     # Autenticação (usado a partir da Etapa 3)
     jwt_secret: SecretStr = SecretStr(DEV_JWT_SECRET)
-    jwt_algorithm: str = "HS256"
+    jwt_algorithm: Literal["HS256", "HS384", "HS512"] = "HS256"
     jwt_access_ttl_minutes: int = 15
     jwt_refresh_ttl_days: int = 7
     password_hash_scheme: Literal["bcrypt", "argon2id"] = "bcrypt"
@@ -45,6 +46,10 @@ class Settings(BaseSettings):
     # Cookie de refresh: Secure é obrigatório em produção (HTTPS). Em dev local (http)
     # o navegador recusaria um cookie Secure, por isso o padrão depende do ambiente.
     cookie_secure: bool | None = None
+    # Quantos proxies confiáveis acrescentam o IP do cliente ao X-Forwarded-For.
+    # 0: usa o IP da conexão (desenvolvimento). 1: Container Apps (o ingress acrescenta
+    # o IP real no fim da lista; entradas anteriores podem ter sido forjadas pelo cliente).
+    trusted_proxy_hops: int = Field(default=0, ge=0, le=5)
 
     # Regras de negócio
     app_timezone: str = "America/Sao_Paulo"
@@ -83,6 +88,10 @@ class Settings(BaseSettings):
     @property
     def refresh_cookie_secure(self) -> bool:
         return self.is_production if self.cookie_secure is None else self.cookie_secure
+
+    @property
+    def docs_enabled(self) -> bool:
+        return not self.is_production if self.enable_docs is None else self.enable_docs
 
     @property
     def is_production(self) -> bool:

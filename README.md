@@ -174,11 +174,27 @@ Na tela: Temperatura, Umidade ou Conjunto (dois gráficos sincronizados, um por 
 duplo), Dossel / Teto / Ambos, linhas de referência das faixas e visão em tabela. O período fica na
 URL (`/historico?periodo=7d`), então dá para compartilhar o link.
 
+## Segurança
+
+- **Permissões só no backend**: um teste percorre todas as rotas da API e garante que nenhuma
+  responde sem token (exceto health, login, refresh e logout), e que nenhuma rota com estufa
+  devolve dados de estufa não autorizada.
+- **Cabeçalhos**: CSP restritiva (sem scripts inline ou externos), `X-Frame-Options: DENY`,
+  `nosniff`, `Permissions-Policy`, HSTS em produção e `Cache-Control: no-store` na API. O Swagger
+  tem uma CSP própria que libera apenas o CDN dele.
+- **Swagger** desligado por padrão em produção (`ENABLE_DOCS` liga explicitamente).
+- **Limite de login por IP**: o IP vem do `X-Forwarded-For` contando `TRUSTED_PROXY_HOPS` a partir
+  do fim (no Container Apps, 1). As primeiras entradas do cabeçalho podem ser forjadas pelo cliente.
+- **Senhas** de 8 a 72 bytes: o bcrypt ignora o que passa de 72 bytes.
+- **JWT** só com HS256/HS384/HS512; após o login, o retorno para a página anterior aceita apenas
+  caminhos internos.
+- **Dependências**: `pip-audit` e `npm audit` no CI (também toda segunda-feira) e Dependabot.
+
 ## Testes e qualidade
 
 ```bash
-cd backend && pytest && ruff check . && ruff format --check .
-cd frontend && npm run lint && npm run test && npm run build
+cd backend && pytest --cov && ruff check . && ruff format --check .   # cobertura mínima 95 %
+cd frontend && npm run lint && npm run test:coverage && npm run build # pisos em vite.config.ts
 ```
 
 ## Variáveis de ambiente
@@ -193,5 +209,5 @@ e `JWT_SECRET` ficam como secrets do Container Apps.
 - [x] 3. Autenticação e autorização
 - [x] 4. Dashboard
 - [x] 5. Histórico
-- [ ] 6. Testes e segurança
+- [x] 6. Testes e segurança
 - [ ] 7. Preparação para produção

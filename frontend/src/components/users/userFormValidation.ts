@@ -17,8 +17,9 @@ export function validateUserForm(values: UserFormValues, options: { requirePassw
   if (!EMAIL_PATTERN.test(values.email.trim())) errors.email = 'E-mail inválido.';
   const { password } = values;
   if (password || options.requirePassword) {
-    if (password.length < 8 || password.length > 128 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-      errors.password = 'A senha deve ter de 8 a 128 caracteres, com letras e números.';
+    // bcrypt considera só 72 bytes da senha (mesma regra do backend)
+    if (password.length < 8 || new TextEncoder().encode(password).length > 72 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      errors.password = 'A senha deve ter de 8 a 72 caracteres, com letras e números.';
     }
   }
   return errors;

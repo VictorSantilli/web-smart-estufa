@@ -43,16 +43,19 @@ def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(settings.log_level)
 
-    docs = settings.enable_docs
+    docs = settings.docs_enabled
     app = FastAPI(
         title=f"{settings.app_name} API",
         version=settings.app_version,
         docs_url=f"{settings.api_prefix}/docs" if docs else None,
         redoc_url=f"{settings.api_prefix}/redoc" if docs else None,
+        swagger_ui_oauth2_redirect_url=f"{settings.api_prefix}/docs/oauth2-redirect",
         openapi_url=f"{settings.api_prefix}/openapi.json" if docs else None,
     )
 
-    app.add_middleware(SecurityHeadersMiddleware, hsts=settings.is_production)
+    app.add_middleware(
+        SecurityHeadersMiddleware, hsts=settings.is_production, api_prefix=settings.api_prefix
+    )
     if settings.cors_origins:
         app.add_middleware(
             CORSMiddleware,

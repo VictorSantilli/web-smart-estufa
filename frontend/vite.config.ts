@@ -23,6 +23,14 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
       globals: true,
+      coverage: {
+        provider: 'v8',
+        include: ['src/**/*.{ts,tsx}'],
+        exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx', 'src/types/**', 'src/vite-env.d.ts'],
+        reporter: ['text-summary', 'text'],
+        // Piso de cobertura: o CI falha se cair abaixo disso.
+        thresholds: { statements: 75, branches: 70, functions: 60, lines: 75 },
+      },
     },
   };
 });
