@@ -1,22 +1,25 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
-import { History, LayoutDashboard, Leaf, Menu, Sprout, UserCircle2, Users, X } from 'lucide-react';
+import { History, LayoutDashboard, Leaf, LogOut, Menu, Sprout, UserCircle2, Users, X } from 'lucide-react';
 
 import { ApiStatus } from '@/components/ApiStatus';
+import { useAuth } from '@/hooks/useAuth';
 import { paths } from '@/routes/paths';
 import { cn } from '@/utils/cn';
 
 const navItems = [
-  { to: paths.dashboard, label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: paths.history, label: 'Histórico', icon: History },
-  // Itens de ADM: visíveis apenas para administradores a partir da Etapa 3
-  { to: paths.users, label: 'Usuários', icon: Users },
-  { to: paths.greenhouses, label: 'Estufas e acessos', icon: Sprout },
+  { to: paths.dashboard, label: 'Dashboard', icon: LayoutDashboard, end: true, adminOnly: false },
+  { to: paths.history, label: 'Histórico', icon: History, end: false, adminOnly: false },
+  { to: paths.users, label: 'Usuários', icon: Users, end: false, adminOnly: true },
+  { to: paths.greenhouses, label: 'Estufas e acessos', icon: Sprout, end: false, adminOnly: true },
 ];
 
 export function AppLayout() {
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  // Esconder itens de ADM é só conveniência: o backend recusa as rotas para não-ADM.
+  const visibleItems = navItems.filter((item) => !item.adminOnly || user?.is_admin);
 
   return (
     <div className="min-h-screen lg:flex">
@@ -41,7 +44,7 @@ export function AppLayout() {
           </button>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {navItems.map(({ to, label, icon: Icon, end }) => (
+          {visibleItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
@@ -69,10 +72,22 @@ export function AppLayout() {
           <div className="hidden sm:block">
             <ApiStatus />
           </div>
-          {/* Dados do usuário autenticado: Etapa 3 */}
-          <div className="ml-auto flex items-center gap-2 text-sm text-gray-600">
-            <UserCircle2 className="h-7 w-7 text-gray-400" aria-hidden />
-            <span className="hidden sm:inline">Visitante</span>
+          <div className="ml-auto flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <UserCircle2 className="h-8 w-8 text-gray-400" aria-hidden />
+              <div className="hidden text-right leading-tight sm:block">
+                <p className="text-sm font-medium text-gray-800">{user?.name ?? user?.email}</p>
+                <p className="text-xs text-gray-500">{user?.is_admin ? 'Administrador' : 'Usuário'}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => void logout()}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+              aria-label="Sair"
+            >
+              <LogOut className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">Sair</span>
+            </button>
           </div>
         </header>
         <main className="flex-1 p-4 sm:p-6">

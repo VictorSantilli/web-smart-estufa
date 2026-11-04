@@ -11,7 +11,11 @@ def test_cors_origins_from_comma_separated_string():
 
 def test_production_rejects_default_jwt_secret():
     with pytest.raises(ValidationError):
-        Settings(app_env="production", database_url="mssql+pyodbc://u:p@h/db")
+        Settings(
+            app_env="production",
+            database_url="mssql+pyodbc://u:p@h/db",
+            jwt_secret="dev-only-change-me",
+        )
 
 
 def test_production_rejects_sqlite():

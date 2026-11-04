@@ -22,3 +22,9 @@ export function formatDate(iso: string, timeZone: string = config.timezone): str
     month: '2-digit',
   }).format(new Date(iso));
 }
+
+/** Datas sem hora (ex.: DataVinculo, "2026-11-04") são exibidas sem conversão de fuso. */
+export function formatDateOnly(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-');
+  return `${day}/${month}/${year}`;
+}

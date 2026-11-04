@@ -90,6 +90,12 @@ docker compose up --build
 O primeiro `up` leva alguns minutos (download do SQL Server e geração de ~65 dias de leituras).
 Para recriar o banco local do zero: `docker compose down -v`.
 
+Crie o primeiro administrador do banco local (a senha é pedida no terminal):
+
+```bash
+docker compose exec backend python -m app.cli create-admin --email admin@estufa.com --name "Administrador"
+```
+
 ### Opção 2 — Sem Docker
 
 Requer Python 3.12+, Node 22+ e o [ODBC Driver 18 for SQL Server](https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server).
@@ -101,6 +107,7 @@ python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\act
 pip install -r requirements-dev.txt
 cp ../.env.example .env        # ajuste DATABASE_URL (ex.: Azure SQL)
 uvicorn app.main:app --reload  # http://localhost:8000
+python -m app.cli create-admin --email voce@exemplo.com --name "Seu Nome"   # se precisar de um ADM
 
 # Frontend (outro terminal)
 cd frontend
@@ -115,6 +122,22 @@ docker build -t smart-estufa-web .
 docker run -p 8000:8000 --env-file .env -e APP_ENV=production smart-estufa-web
 # http://localhost:8000 serve o React e a API
 ```
+
+## Autenticação e permissões
+
+- Login com e-mail e senha em `POST /api/auth/login`. O **access token** (JWT, 15 min) volta no
+  corpo e fica só na memória do navegador. O **refresh token** (7 dias) vai num cookie
+  `HttpOnly`, `SameSite=Strict`, restrito a `/api/auth`, e é trocado a cada renovação.
+- Os tokens carregam `Usuarios.TokenVersao`: desativar o usuário, trocar a senha ou mudar o
+  perfil derruba todas as sessões dele na hora.
+- 5 senhas erradas bloqueiam a conta por 15 minutos (`TentativasFalhas`/`BloqueadoAte`), além de
+  um limite de 10 tentativas por minuto por IP. A mensagem de erro é sempre genérica.
+- Senhas: bcrypt por padrão (compatível com o app mobile). Com `PASSWORD_HASH_SCHEME=argon2id`,
+  novas senhas usam Argon2id e hashes bcrypt são regravados no próximo login.
+- **Perfis**: ADM (`Usuarios.Adm = 1`) gerencia usuários e vê todas as estufas; usuário comum vê
+  só as estufas vinculadas em `UsuarioEstufa`.
+- **Toda checagem é no backend** (`app/api/deps.py`). Estufa sem permissão responde 404, igual a
+  uma estufa inexistente, para não revelar o que existe.
 
 ## Testes e qualidade
 
@@ -132,7 +155,7 @@ e `JWT_SECRET` ficam como secrets do Container Apps.
 
 - [x] 1. Análise e planejamento
 - [x] 2. Estrutura inicial
-- [ ] 3. Autenticação e autorização
+- [x] 3. Autenticação e autorização
 - [ ] 4. Dashboard
 - [ ] 5. Histórico
 - [ ] 6. Testes e segurança
