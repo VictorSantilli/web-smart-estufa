@@ -190,7 +190,9 @@ recentes primeiro, 24 por página. Filtros: `class` (saudavel, fungico, bacteria
   navegador baixa a imagem com o token e a exibe por uma URL local (`blob:`); o blob nunca fica
   público. URLs de outras contas gravadas no banco são recusadas.
 - **Acesso ao Blob**: identidade gerenciada do Container App com o papel *Storage Blob Data Reader*
-  na conta (sem chave). Localmente: `az login` ou `BLOB_CONNECTION_STRING` (ex.: Azurite).
+  na conta (sem chave). Conta de outro diretório: token SAS só de leitura em `BLOB_SAS_TOKEN`
+  (secret); container público: `BLOB_ANONYMOUS=true`. Localmente: `az login` ou
+  `BLOB_CONNECTION_STRING` (ex.: Azurite). Detalhes no passo 6 de `docs/deploy.md`.
 - **Horário**: a Function grava `DataHoraDeteccao` no horário de Brasília (`DETECTION_TIME_IS_UTC=false`);
   a API devolve em UTC e a tela mostra em Brasília.
 - Detecções com `EstufaId` nulo não aparecem (não há como saber a estufa).
