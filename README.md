@@ -139,6 +139,23 @@ docker run -p 8000:8000 --env-file .env -e APP_ENV=production smart-estufa-web
 - **Toda checagem é no backend** (`app/api/deps.py`). Estufa sem permissão responde 404, igual a
   uma estufa inexistente, para não revelar o que existe.
 
+## Dashboard
+
+`GET /api/dashboard/{estufa}` devolve os indicadores já calculados:
+
+- **Última leitura** por `DataHoraEnvio` (UTC). Leituras com `IdEstufa` nulo entram pela tabela
+  `Dispositivos` (DeviceId → estufa).
+- **Última comunicação** = `MAX(DataHoraGravacao)`, convertida de Brasília para UTC (leituras da
+  fila offline do ESP32 chegam com hora de medição antiga, mas contam como comunicação).
+- **Online** quando a última comunicação tem até `STALE_AFTER_MINUTES` (15 min).
+- **Faixas**: temperatura < 16 °C baixa · até 25 normal · > 25 atenção · > 26 crítica; umidade
+  < 65 % baixa · > 85 % risco de fungos (configuráveis no `.env`).
+- **Sensor com falha**: se a leitura mais recente veio nula, o card mostra o último valor válido e
+  o sensor aparece como "falha".
+- **Ventoinhas**: `Ventoinhas` nula = "sem informação".
+
+Também: `GET /api/sensors/{estufa}/latest` (leitura bruta) e `GET /api/greenhouses/{estufa}/devices`.
+
 ## Testes e qualidade
 
 ```bash
@@ -156,7 +173,7 @@ e `JWT_SECRET` ficam como secrets do Container Apps.
 - [x] 1. Análise e planejamento
 - [x] 2. Estrutura inicial
 - [x] 3. Autenticação e autorização
-- [ ] 4. Dashboard
+- [x] 4. Dashboard
 - [ ] 5. Histórico
 - [ ] 6. Testes e segurança
 - [ ] 7. Preparação para produção

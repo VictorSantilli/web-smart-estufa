@@ -48,7 +48,10 @@ class Settings(BaseSettings):
 
     # Regras de negócio
     app_timezone: str = "America/Sao_Paulo"
-    db_local_timezone: str = "E. South America Standard Time"  # fuso de DataHoraGravacao
+    # DataHoraGravacao é gravada pelo DEFAULT do banco no horário de Brasília.
+    # Nome Windows (usado no T-SQL AT TIME ZONE) e nome IANA (usado no Python).
+    db_local_timezone: str = "E. South America Standard Time"
+    db_local_timezone_iana: str = "America/Sao_Paulo"
     stale_after_minutes: int = 15
     history_max_days: int = 60
     temp_min: float = 16.0
