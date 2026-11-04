@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Iterator
 from functools import lru_cache
 
@@ -6,6 +7,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache
@@ -48,5 +51,8 @@ def ping_database() -> bool:
         with get_engine().connect() as conn:
             conn.execute(text("SELECT 1"))
         return True
-    except Exception:
+    except Exception as exc:
+        # Registra o motivo (firewall, login, banco pausado...) sem expor a URL de conexão.
+        cause = getattr(exc, "orig", None) or exc
+        logger.warning("Banco indisponível: %s: %s", type(cause).__name__, cause)
         return False
