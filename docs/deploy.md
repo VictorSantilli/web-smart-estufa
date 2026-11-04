@@ -40,36 +40,42 @@ mssql+pyodbc://app_web:<senha>@<servidor>.database.windows.net:1433/<banco>?driv
 
 ## 2. Azure: resource group e acesso do GitHub (OIDC)
 
-Com a [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (`az login` antes).
-Use a **mesma região do Azure SQL** para menor latência.
+Rode no **Azure Cloud Shell** (ícone `>_` no portal, modo Bash), que já vem com a CLI e logado.
+Use a **mesma região do Azure SQL** para menor latência
+(`az sql server list --query "[].{servidor:name, regiao:location}" -o table`).
+
+O GitHub entra no Azure com uma **identidade gerenciada** com credencial federada (OIDC): não há
+senha guardada no GitHub e não é preciso permissão para criar aplicativos no Entra ID (contas de
+estudante normalmente não têm).
 
 ```bash
 RG=rg-smart-estufa-web
-LOCATION=brazilsouth            # ajuste para a região do seu Azure SQL
+LOCATION=canadacentral          # região do seu Azure SQL
 REPO=VictorSantilli/web-smart-estufa
 SUB=$(az account show --query id -o tsv)
-TENANT=$(az account show --query tenantId -o tsv)
 
-az group create -n $RG -l $LOCATION
+az group create -n $RG -l $LOCATION -o none
 
-# Identidade usada pelo GitHub Actions (sem senha: confia apenas no ambiente "production" do repo)
-APP_ID=$(az ad app create --display-name smart-estufa-web-deploy --query appId -o tsv)
-az ad sp create --id $APP_ID
-az ad app federated-credential create --id $APP_ID --parameters "{
-  \"name\": \"github-production\",
-  \"issuer\": \"https://token.actions.githubusercontent.com\",
-  \"subject\": \"repo:$REPO:environment:production\",
-  \"audiences\": [\"api://AzureADTokenExchange\"]
-}"
+az identity create -g $RG -n smart-estufa-github -l $LOCATION -o none
+CLIENT_ID=$(az identity show -g $RG -n smart-estufa-github --query clientId -o tsv)
+PRINCIPAL_ID=$(az identity show -g $RG -n smart-estufa-github --query principalId -o tsv)
+
+# Confia apenas em execuções do ambiente "production" deste repositório
+az identity federated-credential create -g $RG --identity-name smart-estufa-github -n github-production \
+  --issuer https://token.actions.githubusercontent.com \
+  --subject "repo:$REPO:environment:production" \
+  --audiences api://AzureADTokenExchange -o none
 
 # Permissões apenas neste resource group.
 # O segundo papel é necessário para o Bicep dar ao Container App o acesso ao registro de imagens.
-az role assignment create --assignee $APP_ID --role Contributor \
-  --scope /subscriptions/$SUB/resourceGroups/$RG
-az role assignment create --assignee $APP_ID --role "Role Based Access Control Administrator" \
-  --scope /subscriptions/$SUB/resourceGroups/$RG
+az role assignment create --assignee-object-id $PRINCIPAL_ID --assignee-principal-type ServicePrincipal \
+  --role Contributor --scope /subscriptions/$SUB/resourceGroups/$RG -o none
+az role assignment create --assignee-object-id $PRINCIPAL_ID --assignee-principal-type ServicePrincipal \
+  --role "Role Based Access Control Administrator" --scope /subscriptions/$SUB/resourceGroups/$RG -o none
 
-echo "AZURE_CLIENT_ID=$APP_ID  AZURE_TENANT_ID=$TENANT  AZURE_SUBSCRIPTION_ID=$SUB"
+echo "AZURE_CLIENT_ID=$CLIENT_ID"
+echo "AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)"
+echo "AZURE_SUBSCRIPTION_ID=$SUB"
 ```
 
 ## 3. GitHub: ambiente "production"
