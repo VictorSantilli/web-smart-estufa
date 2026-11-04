@@ -56,6 +56,11 @@ SUB=$(az account show --query id -o tsv)
 
 az group create -n $RG -l $LOCATION -o none
 
+# Assinaturas novas vêm com estes serviços desabilitados (erro MissingSubscriptionRegistration)
+for ns in Microsoft.App Microsoft.ContainerRegistry Microsoft.OperationalInsights Microsoft.Insights Microsoft.ManagedIdentity; do
+  az provider register --namespace $ns --wait
+done
+
 az identity create -g $RG -n smart-estufa-github -l $LOCATION -o none
 CLIENT_ID=$(az identity show -g $RG -n smart-estufa-github --query clientId -o tsv)
 PRINCIPAL_ID=$(az identity show -g $RG -n smart-estufa-github --query principalId -o tsv)
