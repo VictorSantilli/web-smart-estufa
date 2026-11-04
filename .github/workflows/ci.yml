@@ -32,7 +32,7 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -81,7 +81,7 @@ jobs:
           python-version: "3.12"
       - name: Backend (pip-audit)
         run: pip install pip-audit==2.10.1 && pip-audit -r backend/requirements.txt
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - name: Frontend (npm audit, dependências de produção, severidade alta ou crítica)
