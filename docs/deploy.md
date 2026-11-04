@@ -137,7 +137,22 @@ cd /app && python -m app.cli create-admin --email voce@exemplo.com --name Victor
 exit
 ```
 
-## 6. Conferências após o primeiro deploy
+## 6. Imagens da IA (Blob Storage)
+
+O app lê as fotos da conta `tccimagens`, container `imagens-alface`, usando a identidade gerenciada
+do Container App, sem chave. Dê a ela permissão de leitura **uma vez**, no Cloud Shell:
+
+```bash
+STORAGE_ID=$(az storage account show -n tccimagens --query id -o tsv)
+PRINCIPAL_ID=$(az identity show -g rg-smart-estufa-web -n smart-estufa-identity --query principalId -o tsv)
+az role assignment create --assignee-object-id $PRINCIPAL_ID --assignee-principal-type ServicePrincipal \
+  --role "Storage Blob Data Reader" --scope $STORAGE_ID -o none
+```
+
+A permissão leva alguns minutos para valer. Outra conta ou container: crie as variáveis
+`BLOB_ACCOUNT_URL` e `BLOB_CONTAINER` no ambiente `production` do GitHub e rode o Deploy.
+
+## 7. Conferências após o primeiro deploy
 
 - **Login, Dashboard e Histórico** com os dados reais.
 - **Application Insights** (`smart-estufa-insights`): em *Live metrics* aparecem as requisições;

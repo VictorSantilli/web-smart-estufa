@@ -65,6 +65,18 @@ class Settings(BaseSettings):
     humidity_min: float = 65.0
     humidity_max: float = 85.0
 
+    # Imagens das detecções da IA (Azure Blob Storage). Vazio = imagens indisponíveis.
+    # Em produção o acesso é pela identidade gerenciada do Container App (sem chave);
+    # BLOB_CONNECTION_STRING serve só para desenvolvimento local (ex.: Azurite).
+    blob_account_url: str | None = None
+    blob_container: str | None = None
+    blob_connection_string: SecretStr | None = None
+    blob_max_image_mb: int = Field(default=15, ge=1, le=100)
+    # DataHoraDeteccao é gravada pela Function no horário de Brasília (o nome do arquivo
+    # da imagem traz a hora UTC). True apenas se a Function passar a gravar em UTC.
+    detection_time_is_utc: bool = False
+    detections_page_size_max: int = 60
+
     # Observabilidade (Azure Application Insights). Vazio = desligado.
     applicationinsights_connection_string: SecretStr | None = None
 
@@ -78,6 +90,14 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
+    @field_validator("blob_account_url", "blob_container", mode="before")
+    @classmethod
+    def _blank_is_none(cls, value: object) -> object:
+        if isinstance(value, str):
+            value = value.strip().rstrip("/")
+            return value or None
+        return value
+
     @model_validator(mode="after")
     def _check_production(self) -> "Settings":
         if self.app_env == "production":
@@ -86,6 +106,8 @@ class Settings(BaseSettings):
                 raise ValueError("JWT_SECRET deve ser definido com pelo menos 32 caracteres")
             if self.database_url.get_secret_value().startswith("sqlite"):
                 raise ValueError("DATABASE_URL deve apontar para o Azure SQL em produção")
+            if self.blob_account_url and not self.blob_account_url.startswith("https://"):
+                raise ValueError("BLOB_ACCOUNT_URL deve usar https em produção")
         return self
 
     @property

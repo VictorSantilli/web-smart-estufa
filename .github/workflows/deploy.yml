@@ -21,6 +21,8 @@ jobs:
       RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       APP_NAME: ${{ vars.APP_NAME || 'smart-estufa' }}
       MIN_REPLICAS: ${{ vars.MIN_REPLICAS || '0' }}
+      BLOB_ACCOUNT_URL: ${{ vars.BLOB_ACCOUNT_URL || 'https://tccimagens.blob.core.windows.net' }}
+      BLOB_CONTAINER: ${{ vars.BLOB_CONTAINER || 'imagens-alface' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -70,6 +72,7 @@ jobs:
               containerImage="${{ steps.image.outputs.image }}" \
               databaseUrl="$DATABASE_URL" jwtSecret="$JWT_SECRET" \
               minReplicas="$MIN_REPLICAS" \
+              blobAccountUrl="$BLOB_ACCOUNT_URL" blobContainer="$BLOB_CONTAINER" \
             --query properties.outputs.appUrl.value -o tsv)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Aplicação: $url" >> "$GITHUB_STEP_SUMMARY"

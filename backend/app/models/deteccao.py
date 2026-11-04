@@ -10,7 +10,7 @@ from app.database.base import Base
 class Deteccao(Base):
     """Resultado da classificação de imagem pela IA (gravado pela Function de visão).
 
-    Mapeado desde já para a próxima fase (consulta de detecções); não usado nesta versão.
+    O app web só lê esta tabela (histórico de detecções).
     """
 
     __tablename__ = "Deteccoes"

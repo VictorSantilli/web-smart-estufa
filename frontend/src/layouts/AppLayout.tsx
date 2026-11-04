@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
-import { History, LayoutDashboard, Leaf, LogOut, Menu, Sprout, UserCircle2, Users, X } from 'lucide-react';
+import { History, LayoutDashboard, Leaf, LogOut, Menu, ScanSearch, Sprout, UserCircle2, Users, X } from 'lucide-react';
 
 import { ApiStatus } from '@/components/ApiStatus';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +11,7 @@ import { cn } from '@/utils/cn';
 const navItems = [
   { to: paths.dashboard, label: 'Dashboard', icon: LayoutDashboard, end: true, adminOnly: false },
   { to: paths.history, label: 'Histórico', icon: History, end: false, adminOnly: false },
+  { to: paths.detections, label: 'Detecções da IA', icon: ScanSearch, end: false, adminOnly: false },
   { to: paths.users, label: 'Usuários', icon: Users, end: false, adminOnly: true },
   { to: paths.greenhouses, label: 'Estufas e acessos', icon: Sprout, end: false, adminOnly: true },
 ];

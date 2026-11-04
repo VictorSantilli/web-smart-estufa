@@ -17,7 +17,8 @@ APP_CSP = "; ".join(
         "default-src 'self'",
         "script-src 'self'",
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data:",
+        # blob: = imagens das detecções, baixadas com o token e exibidas por URL local.
+        "img-src 'self' data: blob:",
         "font-src 'self'",
         "connect-src 'self'",
         "object-src 'none'",
