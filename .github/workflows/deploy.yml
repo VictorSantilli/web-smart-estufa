@@ -1,0 +1,88 @@
+name: Deploy
+
+# Publica a aplicação no Azure Container Apps. Execução manual (Actions > Deploy > Run workflow).
+# Configuração necessária no ambiente "production" do GitHub: veja docs/deploy.md.
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write # login no Azure por OIDC, sem senha guardada no GitHub
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      APP_NAME: ${{ vars.APP_NAME || 'smart-estufa' }}
+      MIN_REPLICAS: ${{ vars.MIN_REPLICAS || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login no Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Infraestrutura de apoio (registro, logs, ambiente)
+        id: infra
+        run: |
+          outputs=$(az deployment group create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "infra-${GITHUB_RUN_NUMBER}" \
+            --template-file infra/main.bicep \
+            --parameters appName="$APP_NAME" deployApp=false \
+            --query properties.outputs -o json)
+          echo "registry=$(echo "$outputs" | jq -r .registryName.value)" >> "$GITHUB_OUTPUT"
+          echo "login_server=$(echo "$outputs" | jq -r .registryLoginServer.value)" >> "$GITHUB_OUTPUT"
+
+      - name: Build e envio da imagem
+        id: image
+        run: |
+          image="${{ steps.infra.outputs.login_server }}/smart-estufa-web:${GITHUB_SHA}"
+          az acr login --name "${{ steps.infra.outputs.registry }}"
+          docker build -t "$image" .
+          docker push "$image"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Container App com a nova imagem
+        id: app
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          if [ -z "$DATABASE_URL" ] || [ ${#JWT_SECRET} -lt 32 ]; then
+            echo "::error::Defina os secrets DATABASE_URL e JWT_SECRET (mínimo 32 caracteres) no ambiente production."
+            exit 1
+          fi
+          url=$(az deployment group create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "app-${GITHUB_RUN_NUMBER}" \
+            --template-file infra/main.bicep \
+            --parameters appName="$APP_NAME" deployApp=true \
+              containerImage="${{ steps.image.outputs.image }}" \
+              databaseUrl="$DATABASE_URL" jwtSecret="$JWT_SECRET" \
+              minReplicas="$MIN_REPLICAS" \
+            --query properties.outputs.appUrl.value -o tsv)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Aplicação: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verificação após o deploy
+        run: |
+          url="${{ steps.app.outputs.url }}"
+          for i in $(seq 1 30); do
+            if curl -fsS "$url/api/health/live" > /dev/null; then break; fi
+            sleep 5
+          done
+          curl -fsS "$url/api/health/live"
+          echo
+          # Saúde do banco: 503 aqui indica problema de conexão com o Azure SQL.
+          curl -sS -w '\nHTTP %{http_code}\n' "$url/api/health" | tee -a "$GITHUB_STEP_SUMMARY"
+          curl -fsS "$url/api/health" > /dev/null

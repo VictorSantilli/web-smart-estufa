@@ -123,6 +123,11 @@ docker run -p 8000:8000 --env-file .env -e APP_ENV=production smart-estufa-web
 # http://localhost:8000 serve o React e a API
 ```
 
+### Produção (Azure Container Apps)
+
+Infraestrutura em `infra/main.bicep` e deploy pelo workflow **Deploy** (manual). Passo a passo,
+incluindo banco, acesso do GitHub ao Azure e secrets: **[docs/deploy.md](docs/deploy.md)**.
+
 ## Autenticação e permissões
 
 - Login com e-mail e senha em `POST /api/auth/login`. O **access token** (JWT, 15 min) volta no
@@ -210,4 +215,4 @@ e `JWT_SECRET` ficam como secrets do Container Apps.
 - [x] 4. Dashboard
 - [x] 5. Histórico
 - [x] 6. Testes e segurança
-- [ ] 7. Preparação para produção
+- [x] 7. Preparação para produção ([guia de deploy](docs/deploy.md))

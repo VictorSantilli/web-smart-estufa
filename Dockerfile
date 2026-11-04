@@ -44,7 +44,7 @@ USER appuser
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD curl -fsS http://localhost:${PORT}/api/health || exit 1
+    CMD curl -fsS http://localhost:${PORT}/api/health/live || exit 1
 
 # O IP real do cliente é lido do X-Forwarded-For pela aplicação (TRUSTED_PROXY_HOPS).
 # Não usamos --forwarded-allow-ips='*': com ele o Uvicorn confia na primeira entrada do

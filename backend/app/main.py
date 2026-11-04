@@ -17,6 +17,7 @@ from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.core.security_headers import SecurityHeadersMiddleware
+from app.core.telemetry import configure_telemetry
 
 
 def _mount_frontend(app: FastAPI, settings: Settings) -> None:
@@ -42,6 +43,8 @@ def _mount_frontend(app: FastAPI, settings: Settings) -> None:
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(settings.log_level)
+    # Antes de criar o FastAPI, para a instrumentação capturar as requisições.
+    configure_telemetry(settings)
 
     docs = settings.docs_enabled
     app = FastAPI(

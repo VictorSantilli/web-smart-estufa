@@ -65,6 +65,9 @@ class Settings(BaseSettings):
     humidity_min: float = 65.0
     humidity_max: float = 85.0
 
+    # Observabilidade (Azure Application Insights). Vazio = desligado.
+    applicationinsights_connection_string: SecretStr | None = None
+
     # Frontend compilado (servido pelo FastAPI em produção)
     frontend_dist_dir: str = "static"
 
