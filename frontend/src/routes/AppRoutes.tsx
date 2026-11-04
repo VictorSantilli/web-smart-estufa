@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 
 import { AppLayout } from '@/layouts/AppLayout';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { DetectionsPage } from '@/pages/DetectionsPage';
 import { GreenhousesPage } from '@/pages/GreenhousesPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -30,6 +31,7 @@ export function AppRoutes() {
                 <HistoryPage />
               </Suspense>
             } />
+          <Route path={paths.detections} element={<DetectionsPage />} />
           <Route element={<AdminRoute />}>
             <Route path={paths.users} element={<UsersPage />} />
             <Route path={paths.greenhouses} element={<GreenhousesPage />} />

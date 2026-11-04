@@ -179,6 +179,25 @@ Na tela: Temperatura, Umidade ou Conjunto (dois gráficos sincronizados, um por 
 duplo), Dossel / Teto / Ambos, linhas de referência das faixas e visão em tabela. O período fica na
 URL (`/historico?periodo=7d`), então dá para compartilhar o link.
 
+## Detecções da IA
+
+`GET /api/detections/{estufa}` lista a tabela `Deteccoes` (gravada pela Function de visão), mais
+recentes primeiro, 24 por página. Filtros: `class` (saudavel, fungico, bacteriano), `start`/`end`
+(dias de Brasília, inclusivos), `alert`, `status`.
+
+- **Imagem**: `GET /api/detections/{estufa}/{id}/image` busca o blob de `ImagemBlob` na conta
+  `BLOB_ACCOUNT_URL`, container `BLOB_CONTAINER`, **depois** de checar o acesso à estufa. O
+  navegador baixa a imagem com o token e a exibe por uma URL local (`blob:`); o blob nunca fica
+  público. URLs de outras contas gravadas no banco são recusadas.
+- **Acesso ao Blob**: identidade gerenciada do Container App com o papel *Storage Blob Data Reader*
+  na conta (sem chave). Localmente: `az login` ou `BLOB_CONNECTION_STRING` (ex.: Azurite).
+- **Horário**: a Function grava `DataHoraDeteccao` no horário de Brasília (`DETECTION_TIME_IS_UTC=false`);
+  a API devolve em UTC e a tela mostra em Brasília.
+- Detecções com `EstufaId` nulo não aparecem (não há como saber a estufa).
+
+Na tela **Detecções da IA**: grade de fotos com o resultado (Saudável, Fúngico, Bacteriano), a
+confiança e o alerta; ao clicar, a foto ampliada e a probabilidade de cada classe.
+
 ## Segurança
 
 - **Permissões só no backend**: um teste percorre todas as rotas da API e garante que nenhuma
@@ -216,3 +235,4 @@ e `JWT_SECRET` ficam como secrets do Container Apps.
 - [x] 5. Histórico
 - [x] 6. Testes e segurança
 - [x] 7. Preparação para produção ([guia de deploy](docs/deploy.md))
+- [x] 8. Histórico das detecções da IA

@@ -32,6 +32,12 @@ param databaseUrl string = ''
 @description('JWT_SECRET com pelo menos 32 caracteres. Obrigatório quando deployApp=true.')
 param jwtSecret string = ''
 
+@description('URL da conta do Blob Storage com as imagens da IA (ex.: https://<conta>.blob.core.windows.net). Vazio = sem imagens.')
+param blobAccountUrl string = ''
+
+@description('Container do Blob Storage com as imagens da IA.')
+param blobContainer string = ''
+
 @description('Réplicas mínimas. 0 = escala a zero quando ninguém usa (primeiro acesso demora alguns segundos).')
 @minValue(0)
 @maxValue(3)
@@ -169,6 +175,11 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
             { name: 'DATABASE_URL', secretRef: 'database-url' }
             { name: 'JWT_SECRET', secretRef: 'jwt-secret' }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', secretRef: 'appinsights-connection-string' }
+            // Imagens da IA: leitura pela identidade gerenciada (papel Storage Blob Data Reader
+            // concedido na conta de armazenamento; ver docs/deploy.md). Nenhuma chave aqui.
+            { name: 'BLOB_ACCOUNT_URL', value: blobAccountUrl }
+            { name: 'BLOB_CONTAINER', value: blobContainer }
+            { name: 'AZURE_CLIENT_ID', value: identity.properties.clientId }
           ]
           probes: [
             {

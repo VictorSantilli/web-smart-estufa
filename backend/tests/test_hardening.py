@@ -63,7 +63,12 @@ def test_route_inventory_is_complete():
     assert len(routes) >= 15
     assert ("PATCH", "/api/users/{user_id}") in routes
     paths = {p for _, p in GREENHOUSE_ROUTES}
-    assert {"/api/dashboard/{greenhouse_id}", "/api/history/{greenhouse_id}"} <= paths
+    assert {
+        "/api/dashboard/{greenhouse_id}",
+        "/api/history/{greenhouse_id}",
+        "/api/detections/{greenhouse_id}",
+        "/api/detections/{greenhouse_id}/{detection_id}/image",
+    } <= paths
 
 
 # ---------- cabeçalhos ----------
