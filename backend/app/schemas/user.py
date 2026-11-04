@@ -5,12 +5,16 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.schemas.auth import GreenhouseRef
 
-PASSWORD_RULE = "A senha deve ter de 8 a 128 caracteres, com pelo menos uma letra e um número."
+# O bcrypt (formato usado pelo app mobile) considera só os primeiros 72 bytes da senha:
+# acima disso, senhas diferentes com o mesmo início seriam aceitas. Por isso o limite.
+PASSWORD_MAX_BYTES = 72
+PASSWORD_RULE = "A senha deve ter de 8 a 72 caracteres, com pelo menos uma letra e um número."
 
 
 def _check_password(value: str) -> str:
     if (
-        not (8 <= len(value) <= 128)
+        len(value) < 8
+        or len(value.encode("utf-8")) > PASSWORD_MAX_BYTES
         or not re.search(r"[A-Za-z]", value)
         or not re.search(r"\d", value)
     ):

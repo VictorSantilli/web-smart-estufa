@@ -2,6 +2,15 @@
 testpaths = ["tests"]
 addopts = "-q"
 
+[tool.coverage.run]
+source = ["app"]
+
+[tool.coverage.report]
+# Piso de cobertura: o CI falha se cair abaixo disso.
+fail_under = 95
+skip_covered = true
+show_missing = true
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

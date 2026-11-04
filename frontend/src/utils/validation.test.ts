@@ -1,6 +1,6 @@
 import { validateUserForm } from '@/components/users/userFormValidation';
 
-import { validateLogin } from './validation';
+import { safeRedirectPath, validateLogin } from './validation';
 
 describe('validateLogin', () => {
   it('exige e-mail e senha', () => {
@@ -29,5 +29,20 @@ describe('validateUserForm', () => {
 
   it('senha é opcional na edição', () => {
     expect(validateUserForm({ ...base, password: '' }, { requirePassword: false })).toEqual({});
+  });
+});
+
+describe('safeRedirectPath', () => {
+  it.each([
+    ['/historico', '/historico'],
+    ['/usuarios?page=2', '/usuarios?page=2'],
+    ['//evil.com', '/'],
+    ['/\\evil.com', '/'],
+    ['https://evil.com', '/'],
+    ['javascript:alert(1)', '/'],
+    [undefined, '/'],
+    [42, '/'],
+  ])('%s → %s', (from, expected) => {
+    expect(safeRedirectPath(from, '/')).toBe(expected);
   });
 });

@@ -42,6 +42,7 @@ class AuthService:
 
         now = utcnow()
         if user.bloqueado_ate and user.bloqueado_ate > now:
+            burn_password_check(password)  # mesmo tempo de resposta de uma tentativa normal
             raise TOO_MANY_ATTEMPTS
 
         valid, new_hash = verify_password(password, user.senha_hash)

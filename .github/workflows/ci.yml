@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: "0 11 * * 1"
 
 jobs:
   backend:
@@ -21,7 +23,7 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: ruff check .
       - run: ruff format --check .
-      - run: pytest
+      - run: pytest --cov --cov-report=term
 
   frontend:
     runs-on: ubuntu-latest
@@ -37,5 +39,23 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
-      - run: npm run test
+      - run: npm run test:coverage
       - run: npm run build
+
+  # Dependências com vulnerabilidades conhecidas. Roda também toda segunda-feira,
+  # para avisar sobre falhas descobertas depois do merge.
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Backend (pip-audit)
+        run: pip install pip-audit==2.10.1 && pip-audit -r backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Frontend (npm audit, dependências de produção, severidade alta ou crítica)
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high

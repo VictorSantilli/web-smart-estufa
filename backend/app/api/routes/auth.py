@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, Request, Response, status
 
 from app.api.deps import CurrentUser, DbSession
+from app.core.client_ip import client_ip
 from app.core.config import get_settings
 from app.core.rate_limit import login_ip_limiter
 from app.core.security import REFRESH_COOKIE_NAME
@@ -31,14 +32,9 @@ def _token_response(access_token: str) -> TokenResponse:
     )
 
 
-def _client_ip(request: Request) -> str:
-    # Atrás do Container Apps, o Uvicorn (--proxy-headers) já põe o IP real em client.host.
-    return request.client.host if request.client else "unknown"
-
-
 @router.post("/login", response_model=TokenResponse, summary="Autenticar com e-mail e senha")
 def login(data: LoginRequest, request: Request, response: Response, db: DbSession):
-    if not login_ip_limiter.hit(_client_ip(request)):
+    if not login_ip_limiter.hit(client_ip(request)):
         raise TOO_MANY_ATTEMPTS
     _, access, refresh = AuthService(db).login(data.email, data.password)
     _set_refresh_cookie(response, refresh)
