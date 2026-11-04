@@ -139,8 +139,11 @@ exit
 
 ## 6. Imagens da IA (Blob Storage)
 
-O app lê as fotos da conta `tccimagens`, container `imagens-alface`, usando a identidade gerenciada
-do Container App, sem chave. Dê a ela permissão de leitura **uma vez**, no Cloud Shell:
+O app lê as fotos da conta `tccimagens`, container `imagens-alface`. Escolha **uma** das formas
+de acesso, conforme quem é o dono da conta:
+
+**a) A conta está em uma assinatura sua** (o comando abaixo encontra a conta): dê leitura à
+identidade gerenciada do app, sem chave, uma vez, no Cloud Shell:
 
 ```bash
 STORAGE_ID=$(az storage account show -n tccimagens --query id -o tsv)
@@ -149,8 +152,16 @@ az role assignment create --assignee-object-id $PRINCIPAL_ID --assignee-principa
   --role "Storage Blob Data Reader" --scope $STORAGE_ID -o none
 ```
 
-A permissão leva alguns minutos para valer. Outra conta ou container: crie as variáveis
-`BLOB_ACCOUNT_URL` e `BLOB_CONTAINER` no ambiente `production` do GitHub e rode o Deploy.
+**b) A conta é de outra pessoa e o container é privado**: o dono gera um token SAS **só de
+leitura** para o container (portal: conta → *Containers* → `imagens-alface` → *Shared access
+tokens*, permissões *Read*, validade até depois da banca, *Allowed protocols: HTTPS only*) e
+te passa o *Blob SAS token*. Cadastre-o como secret `BLOB_SAS_TOKEN` no ambiente `production` e
+rode o Deploy. Quando o token vencer, gere outro e repita.
+
+**c) O container é público** (a URL de uma foto abre numa janela anônima do navegador): crie a
+variável `BLOB_ANONYMOUS` = `true` no ambiente `production` e rode o Deploy.
+
+Outra conta ou container: variáveis `BLOB_ACCOUNT_URL` e `BLOB_CONTAINER` no mesmo ambiente.
 
 ## 7. Conferências após o primeiro deploy
 

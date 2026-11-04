@@ -38,6 +38,13 @@ param blobAccountUrl string = ''
 @description('Container do Blob Storage com as imagens da IA.')
 param blobContainer string = ''
 
+@secure()
+@description('Token SAS só de leitura do container de imagens (quando a conta é de outro diretório). Vazio = não usa.')
+param blobSasToken string = ''
+
+@description('true quando o container de imagens tem leitura pública (sem credencial).')
+param blobAnonymous bool = false
+
 @description('Réplicas mínimas. 0 = escala a zero quando ninguém usa (primeiro acesso demora alguns segundos).')
 @minValue(0)
 @maxValue(3)
@@ -151,11 +158,13 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
           identity: identity.id
         }
       ]
-      secrets: [
+      secrets: concat([
         { name: 'database-url', value: databaseUrl }
         { name: 'jwt-secret', value: jwtSecret }
         { name: 'appinsights-connection-string', value: appInsights.properties.ConnectionString }
-      ]
+      ], empty(blobSasToken) ? [] : [
+        { name: 'blob-sas-token', value: blobSasToken }
+      ])
     }
     template: {
       containers: [
@@ -166,7 +175,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
             cpu: json('0.5')
             memory: '1Gi'
           }
-          env: [
+          env: concat([
             { name: 'APP_ENV', value: 'production' }
             { name: 'LOG_LEVEL', value: 'INFO' }
             { name: 'WEB_CONCURRENCY', value: '2' }
@@ -175,12 +184,15 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
             { name: 'DATABASE_URL', secretRef: 'database-url' }
             { name: 'JWT_SECRET', secretRef: 'jwt-secret' }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', secretRef: 'appinsights-connection-string' }
-            // Imagens da IA: leitura pela identidade gerenciada (papel Storage Blob Data Reader
-            // concedido na conta de armazenamento; ver docs/deploy.md). Nenhuma chave aqui.
+            // Imagens da IA: identidade gerenciada (papel Storage Blob Data Reader), token SAS
+            // só de leitura (secret) ou container público; ver docs/deploy.md, passo 6.
             { name: 'BLOB_ACCOUNT_URL', value: blobAccountUrl }
             { name: 'BLOB_CONTAINER', value: blobContainer }
             { name: 'AZURE_CLIENT_ID', value: identity.properties.clientId }
-          ]
+            { name: 'BLOB_ANONYMOUS', value: string(blobAnonymous) }
+          ], empty(blobSasToken) ? [] : [
+            { name: 'BLOB_SAS_TOKEN', secretRef: 'blob-sas-token' }
+          ])
           probes: [
             {
               type: 'Startup'

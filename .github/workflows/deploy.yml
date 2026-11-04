@@ -23,6 +23,7 @@ jobs:
       MIN_REPLICAS: ${{ vars.MIN_REPLICAS || '0' }}
       BLOB_ACCOUNT_URL: ${{ vars.BLOB_ACCOUNT_URL || 'https://tccimagens.blob.core.windows.net' }}
       BLOB_CONTAINER: ${{ vars.BLOB_CONTAINER || 'imagens-alface' }}
+      BLOB_ANONYMOUS: ${{ vars.BLOB_ANONYMOUS || 'false' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -59,6 +60,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          BLOB_SAS_TOKEN: ${{ secrets.BLOB_SAS_TOKEN }}
         run: |
           if [ -z "$DATABASE_URL" ] || [ ${#JWT_SECRET} -lt 32 ]; then
             echo "::error::Defina os secrets DATABASE_URL e JWT_SECRET (mínimo 32 caracteres) no ambiente production."
@@ -73,6 +75,7 @@ jobs:
               databaseUrl="$DATABASE_URL" jwtSecret="$JWT_SECRET" \
               minReplicas="$MIN_REPLICAS" \
               blobAccountUrl="$BLOB_ACCOUNT_URL" blobContainer="$BLOB_CONTAINER" \
+              blobSasToken="$BLOB_SAS_TOKEN" blobAnonymous="$BLOB_ANONYMOUS" \
             --query properties.outputs.appUrl.value -o tsv)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Aplicação: $url" >> "$GITHUB_STEP_SUMMARY"

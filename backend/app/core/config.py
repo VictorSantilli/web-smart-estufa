@@ -71,6 +71,10 @@ class Settings(BaseSettings):
     blob_account_url: str | None = None
     blob_container: str | None = None
     blob_connection_string: SecretStr | None = None
+    # Conta de outra pessoa/diretório, onde a identidade do app não recebe papel:
+    # token SAS só de leitura (secret) ou container público (BLOB_ANONYMOUS=true).
+    blob_sas_token: SecretStr | None = None
+    blob_anonymous: bool = False
     blob_max_image_mb: int = Field(default=15, ge=1, le=100)
     # DataHoraDeteccao é gravada pela Function no horário de Brasília (o nome do arquivo
     # da imagem traz a hora UTC). True apenas se a Function passar a gravar em UTC.
@@ -88,6 +92,14 @@ class Settings(BaseSettings):
     def _split_origins(cls, value: object) -> object:
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
+
+    @field_validator("blob_sas_token", mode="before")
+    @classmethod
+    def _blank_secret_is_none(cls, value: object) -> object:
+        if isinstance(value, str):
+            value = value.strip().lstrip("?")
+            return value or None
         return value
 
     @field_validator("blob_account_url", "blob_container", mode="before")

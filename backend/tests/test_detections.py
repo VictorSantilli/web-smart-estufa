@@ -375,6 +375,17 @@ def test_azure_store_construction(monkeypatch):
         blob_store._azure_store.cache_clear()
     store = blob_store.AzureBlobStore(_settings())
     assert store.client.url.startswith("https://conta.blob.core.windows.net")
+    assert type(store.client.credential).__name__ == "DefaultAzureCredential"
+
+
+def test_azure_store_sas_and_anonymous():
+    from azure.core.credentials import AzureSasCredential
+    from pydantic import SecretStr
+
+    store = blob_store.AzureBlobStore(_settings(blob_sas_token=SecretStr("sv=2024&sig=abc")))
+    assert isinstance(store.client.credential, AzureSasCredential)
+    store = blob_store.AzureBlobStore(_settings(blob_anonymous=True))
+    assert store.client.credential is None
 
 
 def test_blob_settings_validation(monkeypatch):
@@ -384,6 +395,8 @@ def test_blob_settings_validation(monkeypatch):
         "https://c.blob.core.windows.net"
     )
     assert Settings(blob_container="  ").blob_container is None
+    assert Settings(blob_sas_token=" ").blob_sas_token is None
+    assert Settings(blob_sas_token="?sv=1&sig=x").blob_sas_token.get_secret_value() == "sv=1&sig=x"
     with pytest.raises(ValueError, match="BLOB_ACCOUNT_URL"):
         Settings(
             app_env="production",

@@ -5,8 +5,10 @@
   (o backend nunca busca um endereço arbitrário vindo do banco).
 - Caminho: "<container>/<blob>", ou só "<blob>" quando BLOB_CONTAINER estiver definido.
 
-Em produção a autenticação é pela identidade gerenciada do Container App
-(papel "Storage Blob Data Reader" na conta); nenhuma chave fica no código.
+Autenticação, nesta ordem: BLOB_CONNECTION_STRING (só desenvolvimento), BLOB_SAS_TOKEN
+(token só de leitura, para conta de outro diretório), BLOB_ANONYMOUS (container público) e,
+por padrão, a identidade gerenciada do Container App (papel "Storage Blob Data Reader").
+Nenhuma chave fica no código.
 """
 
 import logging
@@ -107,6 +109,16 @@ class AzureBlobStore:
         conn = settings.blob_connection_string
         if conn is not None:
             self.client = BlobServiceClient.from_connection_string(conn.get_secret_value())
+        elif settings.blob_sas_token is not None:
+            from azure.core.credentials import AzureSasCredential
+
+            self.client = BlobServiceClient(
+                settings.blob_account_url,
+                credential=AzureSasCredential(settings.blob_sas_token.get_secret_value()),
+            )
+        elif settings.blob_anonymous:
+            # Container com acesso público de leitura: nenhuma credencial.
+            self.client = BlobServiceClient(settings.blob_account_url)
         else:
             from azure.identity import DefaultAzureCredential
 
