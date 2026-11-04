@@ -119,10 +119,17 @@ Para voltar a uma versão anterior, rode o workflow a partir do commit desejado.
 ## 5. Primeiro acesso
 
 Usuários do app mobile com `Adm = 1` já conseguem entrar (as senhas bcrypt são compatíveis).
-Para criar ou promover um administrador direto no container:
+Para criar ou promover um administrador direto no container, abra um shell nele:
 
 ```bash
-az containerapp exec -g rg-smart-estufa-web -n smart-estufa-web --command "python -m app.cli create-admin --email voce@exemplo.com --name Victor"
+az containerapp exec -g rg-smart-estufa-web -n smart-estufa-web --command sh
+```
+
+e, dentro do container (o código fica em `/app`):
+
+```bash
+cd /app && python -m app.cli create-admin --email voce@exemplo.com --name Victor
+exit
 ```
 
 ## 6. Conferências após o primeiro deploy
