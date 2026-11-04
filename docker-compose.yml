@@ -1,0 +1,64 @@
+# Ambiente de DESENVOLVIMENTO local:
+#   db        SQL Server 2022 (mesmo motor do Azure SQL) com dados fictícios
+#   db-init   cria o banco: esquema atual + migração 001 + seed
+#   backend   FastAPI com hot reload em http://localhost:8000 (Swagger em /api/docs)
+#   frontend  Vite com hot reload em http://localhost:5173 (encaminha /api ao backend)
+#
+# Uso: cp .env.example .env && docker compose up --build
+# Para usar o Azure SQL real em vez do banco local, troque DATABASE_URL no .env.
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?defina MSSQL_SA_PASSWORD no .env}
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+
+  db-init:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    depends_on: [db]
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      DB_NAME: ${DEV_DB_NAME:-SmartEstufaDev}
+    volumes:
+      - ./database:/database:ro
+    entrypoint: ["sh", "/database/dev/init-db.sh"]
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    env_file: .env
+    environment:
+      FRONTEND_DIST_DIR: /nonexistent  # no dev o frontend é servido pelo Vite
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev"
+    environment:
+      VITE_DEV_API_PROXY: http://backend:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    depends_on: [backend]
+
+volumes:
+  mssql-data:
+  frontend-node-modules:
