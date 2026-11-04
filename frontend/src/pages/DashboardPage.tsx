@@ -7,6 +7,7 @@ import { StatusCard } from '@/components/dashboard/StatusCard';
 import { GreenhouseSelector } from '@/components/greenhouse/GreenhouseSelector';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useSelectedGreenhouse } from '@/hooks/useSelectedGreenhouse';
@@ -24,24 +25,7 @@ const viewOptions: { value: SensorView; label: string }[] = [
 ];
 
 function SensorViewToggle({ value, onChange }: { value: SensorView; onChange: (v: SensorView) => void }) {
-  return (
-    <div role="radiogroup" aria-label="Sensores exibidos" className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5">
-      {viewOptions.map((option) => (
-        <button
-          key={option.value}
-          role="radio"
-          aria-checked={value === option.value}
-          onClick={() => onChange(option.value)}
-          className={cn(
-            'rounded-md px-3 py-1 text-sm font-medium transition-colors',
-            value === option.value ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-100',
-          )}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
+  return <SegmentedControl label="Sensores exibidos" value={value} options={viewOptions} onChange={onChange} />;
 }
 
 function EnvironmentSection({ data, view }: { data: DashboardData; view: SensorView }) {
