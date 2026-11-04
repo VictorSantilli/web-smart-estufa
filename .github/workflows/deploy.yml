@@ -83,6 +83,11 @@ jobs:
           done
           curl -fsS "$url/api/health/live"
           echo
-          # Saúde do banco: 503 aqui indica problema de conexão com o Azure SQL.
+          # Saúde do banco. O Azure SQL serverless pausado leva ~1 min para retomar,
+          # então tenta por até 3 minutos antes de considerar falha de conexão.
+          for i in $(seq 1 18); do
+            if curl -fsS "$url/api/health" > /dev/null; then break; fi
+            sleep 10
+          done
           curl -sS -w '\nHTTP %{http_code}\n' "$url/api/health" | tee -a "$GITHUB_STEP_SUMMARY"
           curl -fsS "$url/api/health" > /dev/null
