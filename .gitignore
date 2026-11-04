@@ -12,3 +12,8 @@ dist/
 .DS_Store
 .vscode/
 .idea/
+
+# Cobertura de testes
+.coverage
+coverage/
+htmlcov/
