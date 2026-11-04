@@ -156,6 +156,24 @@ docker run -p 8000:8000 --env-file .env -e APP_ENV=production smart-estufa-web
 
 Também: `GET /api/sensors/{estufa}/latest` (leitura bruta) e `GET /api/greenhouses/{estufa}/devices`.
 
+## Histórico
+
+`GET /api/history/{estufa}?period=24h|7d|30d` ou `?start=AAAA-MM-DD&end=AAAA-MM-DD`:
+
+- **24h**: janela móvel das últimas 24 horas, com cada medição (`granularity = raw`).
+- **7d / 30d**: últimos 7 ou 30 dias do calendário de Brasília, incluindo hoje, com mínima, média
+  e máxima por dia (`granularity = daily`). O agrupamento por dia é feito no SQL Server com
+  `AT TIME ZONE`, a partir de `DataHoraEnvio` (UTC).
+- **Personalizado**: datas inclusivas, até `HISTORY_MAX_DAYS` (60) dias, fim não pode ser futuro.
+  Até 2 dias mostra cada medição; acima disso, agregados por dia.
+- Medições repetidas (mesmo `DeviceId` + `DataHoraEnvio`, reenvios da fila offline) contam uma vez.
+- Valores nulos (sensor em falha) são ignorados nos agregados. Dias sem dados vêm com `samples = 0`
+  e o gráfico mostra a falha; no modo bruto, intervalos maiores que 15 min interrompem a linha.
+
+Na tela: Temperatura, Umidade ou Conjunto (dois gráficos sincronizados, um por grandeza, sem eixo
+duplo), Dossel / Teto / Ambos, linhas de referência das faixas e visão em tabela. O período fica na
+URL (`/historico?periodo=7d`), então dá para compartilhar o link.
+
 ## Testes e qualidade
 
 ```bash
@@ -174,6 +192,6 @@ e `JWT_SECRET` ficam como secrets do Container Apps.
 - [x] 2. Estrutura inicial
 - [x] 3. Autenticação e autorização
 - [x] 4. Dashboard
-- [ ] 5. Histórico
+- [x] 5. Histórico
 - [ ] 6. Testes e segurança
 - [ ] 7. Preparação para produção
