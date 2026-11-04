@@ -25,7 +25,7 @@ jobs:
       BLOB_CONTAINER: ${{ vars.BLOB_CONTAINER || 'imagens-alface' }}
       BLOB_ANONYMOUS: ${{ vars.BLOB_ANONYMOUS || 'false' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Login no Azure
         uses: azure/login@v2
