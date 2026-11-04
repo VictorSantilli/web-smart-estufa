@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     password_hash_scheme: Literal["bcrypt", "argon2id"] = "bcrypt"
     login_max_attempts: int = 5
     login_lock_minutes: int = 15
+    login_ip_max_per_minute: int = 10
+    # Cookie de refresh: Secure é obrigatório em produção (HTTPS). Em dev local (http)
+    # o navegador recusaria um cookie Secure, por isso o padrão depende do ambiente.
+    cookie_secure: bool | None = None
 
     # Regras de negócio
     app_timezone: str = "America/Sao_Paulo"
@@ -72,6 +76,10 @@ class Settings(BaseSettings):
             if self.database_url.get_secret_value().startswith("sqlite"):
                 raise ValueError("DATABASE_URL deve apontar para o Azure SQL em produção")
         return self
+
+    @property
+    def refresh_cookie_secure(self) -> bool:
+        return self.is_production if self.cookie_secure is None else self.cookie_secure
 
     @property
     def is_production(self) -> bool:
