@@ -10,7 +10,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ---------- 2. Runtime Python + ODBC Driver 18 ----------
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.15-slim-bookworm AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
