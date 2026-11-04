@@ -7,7 +7,8 @@ os.environ["FRONTEND_DIST_DIR"] = "/nonexistent"
 os.environ["JWT_SECRET"] = "test-secret-" + "x" * 32
 
 from collections.abc import Callable, Iterator  # noqa: E402
-from datetime import date  # noqa: E402
+from datetime import date, datetime, timedelta  # noqa: E402
+from zoneinfo import ZoneInfo  # noqa: E402
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -20,7 +21,7 @@ from app.core.security import hash_password  # noqa: E402
 from app.database.base import Base  # noqa: E402
 from app.database.session import _session_factory, get_engine  # noqa: E402
 from app.main import create_app  # noqa: E402
-from app.models import Estufa, Usuario, UsuarioEstufa  # noqa: E402
+from app.models import Dispositivo, Estufa, LeituraSensor, Usuario, UsuarioEstufa  # noqa: E402
 
 PASSWORD = "Senha123"
 _HASH_CACHE: dict[str, str] = {}
@@ -109,3 +110,61 @@ def login(client: TestClient) -> Callable[[str], dict[str, str]]:
         return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
     return _login
+
+
+@pytest.fixture
+def make_device(db: Session) -> Callable[..., Dispositivo]:
+    def _make(device_id: str, greenhouse: Estufa) -> Dispositivo:
+        device = Dispositivo(
+            device_id=device_id, estufa_id=greenhouse.id, ativo=True, data_criacao=utcnow()
+        )
+        db.add(device)
+        db.commit()
+        return device
+
+    return _make
+
+
+def brasilia(utc_naive: datetime) -> datetime:
+    """Simula o DEFAULT do banco: DataHoraGravacao no horário de Brasília."""
+    return (
+        utc_naive.replace(tzinfo=ZoneInfo("UTC"))
+        .astimezone(ZoneInfo("America/Sao_Paulo"))
+        .replace(tzinfo=None)
+    )
+
+
+@pytest.fixture
+def make_reading(db: Session) -> Callable[..., LeituraSensor]:
+    """Cria uma leitura medida há `minutes_ago` minutos (gravada `delay_s` segundos depois)."""
+
+    def _make(
+        greenhouse: Estufa | None,
+        *,
+        minutes_ago: float = 1,
+        device_id: str = "esp32-01",
+        temp: float | None = 22,
+        hum: float | None = 75,
+        temp_ceiling: float | None = 24,
+        hum_ceiling: float | None = 70,
+        fans: bool | None = None,
+        delay_s: float = 2,
+        recorded: bool = True,
+    ) -> LeituraSensor:
+        sent = utcnow() - timedelta(minutes=minutes_ago)
+        reading = LeituraSensor(
+            device_id=device_id,
+            temperatura=temp,
+            umidade=hum,
+            temp_teto=temp_ceiling,
+            umid_teto=hum_ceiling,
+            data_hora_envio=sent,
+            data_hora_gravacao=brasilia(sent + timedelta(seconds=delay_s)) if recorded else None,
+            id_estufa=greenhouse.id if greenhouse else None,
+            ventoinhas=fans,
+        )
+        db.add(reading)
+        db.commit()
+        return reading
+
+    return _make

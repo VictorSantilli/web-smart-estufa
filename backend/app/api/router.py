@@ -1,10 +1,12 @@
 from fastapi import APIRouter
 
-from app.api.routes import auth, greenhouses, health, users
+from app.api.routes import auth, dashboard, greenhouses, health, sensors, users
 
 api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(auth.router)
 api_router.include_router(users.router)
 api_router.include_router(greenhouses.router)
-# Etapas 4 e 5: sensors, dashboard, history
+api_router.include_router(dashboard.router)
+api_router.include_router(sensors.router)
+# Etapa 5: history

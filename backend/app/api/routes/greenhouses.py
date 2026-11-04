@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 
 from app.api.deps import AdminUser, AuthorizedGreenhouse, CurrentUser, DbSession
+from app.schemas.dashboard import DeviceOut
 from app.schemas.greenhouse import GreenhouseOut, GreenhouseUserOut
+from app.services.dashboard_service import DashboardService
 from app.services.greenhouse_service import GreenhouseService
 
 router = APIRouter(prefix="/greenhouses", tags=["greenhouses"])
@@ -24,3 +26,12 @@ def get_greenhouse(greenhouse: AuthorizedGreenhouse):
 )
 def greenhouse_users(greenhouse: AuthorizedGreenhouse, _: AdminUser, db: DbSession):
     return GreenhouseService(db).users_with_access(greenhouse.id)
+
+
+@router.get(
+    "/{greenhouse_id}/devices",
+    response_model=list[DeviceOut],
+    summary="Dispositivos (ESP32) da estufa e último contato",
+)
+def greenhouse_devices(greenhouse: AuthorizedGreenhouse, db: DbSession):
+    return DashboardService(db).devices(greenhouse)
