@@ -1,4 +1,5 @@
-export type DetectionClass = 'fungico' | 'bacteriano' | 'saudavel';
+/** nao_alface: a IA recusou a imagem por não ser de alface. */
+export type DetectionClass = 'fungico' | 'bacteriano' | 'saudavel' | 'nao_alface';
 
 export interface Detection {
   id: number;
@@ -6,7 +7,8 @@ export interface Detection {
   /** Hora da captura (UTC). */
   detected_at: string;
   recorded_at: string | null;
-  detection_class: DetectionClass;
+  /** saudavel, fungico, bacteriano ou outro valor gravado pela Function. */
+  detection_class: string;
   confidence: number;
   probabilities: {
     fungal: number | null;

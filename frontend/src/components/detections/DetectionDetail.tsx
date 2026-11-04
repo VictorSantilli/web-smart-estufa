@@ -4,7 +4,7 @@ import type { Detection } from '@/types/detection';
 import { formatDateTime } from '@/utils/datetime';
 
 import { DetectionImage } from './DetectionImage';
-import { CLASS_INFO, formatPercent, probabilityRows } from './detectionFormat';
+import { classInfo, formatPercent, probabilityRows } from './detectionFormat';
 
 interface DetectionDetailProps {
   detection: Detection | null;
@@ -13,7 +13,7 @@ interface DetectionDetailProps {
 
 export function DetectionDetail({ detection, onClose }: DetectionDetailProps) {
   if (!detection) return null;
-  const info = CLASS_INFO[detection.detection_class];
+  const info = classInfo(detection.detection_class);
   const when = formatDateTime(detection.detected_at);
   return (
     <Modal title="Detecção da IA" open onClose={onClose}>
