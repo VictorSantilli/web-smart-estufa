@@ -13,6 +13,7 @@ from app.main import create_app
 # Rotas que respondem sem access token, por desenho.
 PUBLIC_ROUTES = {
     ("GET", "/api/health"),
+    ("GET", "/api/health/live"),
     ("POST", "/api/auth/login"),
     ("POST", "/api/auth/refresh"),
     ("POST", "/api/auth/logout"),

@@ -42,6 +42,34 @@ jobs:
       - run: npm run test:coverage
       - run: npm run build
 
+  # Constrói a imagem de produção e confere que ela sobe e serve a API e o React.
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t smart-estufa-web:ci .
+      - name: Teste rápido da imagem
+        run: |
+          docker run -d --name web -p 8000:8000 \
+            -e APP_ENV=development \
+            -e DATABASE_URL=sqlite+pysqlite:///:memory: \
+            smart-estufa-web:ci
+          for i in $(seq 1 30); do curl -fsS localhost:8000/api/health/live && break; sleep 2; done
+          curl -fsS localhost:8000/api/health/live
+          curl -fsS localhost:8000/ | grep -q '<div id="root">'
+          curl -fsS localhost:8000/historico | grep -q '<div id="root">'
+          docker exec web id -u | grep -qv '^0$'   # não roda como root
+      - if: failure()
+        run: docker logs web || true
+
+  # Valida a infraestrutura em Bicep (sintaxe, tipos e regras do linter).
+  infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: az bicep install
+      - run: az bicep build --file infra/main.bicep --stdout > /dev/null
+
   # Dependências com vulnerabilidades conhecidas. Roda também toda segunda-feira,
   # para avisar sobre falhas descobertas depois do merge.
   audit:
