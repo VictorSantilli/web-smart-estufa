@@ -67,7 +67,7 @@ class DetectionService:
             greenhouse_id=det.estufa_id,
             detected_at=self._detected_utc(det.data_hora_deteccao),
             recorded_at=local_to_utc(det.data_hora_gravacao, self.settings.db_local_timezone_iana),
-            detection_class=det.classe,
+            detection_class=(det.classe or "").strip().lower(),
             confidence=float(det.confianca),
             probabilities=Probabilities(
                 fungal=_float(det.prob_fungico),

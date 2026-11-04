@@ -404,3 +404,18 @@ def test_blob_settings_validation(monkeypatch):
             database_url="mssql+pyodbc://u:p@h/db",
             blob_account_url="http://c.blob.core.windows.net",
         )
+
+
+def test_unknown_class_does_not_break_the_list(client, scenario, db, make_detection):
+    """A Function pode gravar outros resultados (ex.: imagem que não é de alface)."""
+    g1, _, user, _ = scenario
+    det = make_detection(g1, cls="saudavel")
+    det.classe = "Nao_Alface"
+    db.commit()
+    r = client.get(f"/api/detections/{g1.id}", headers=user)
+    assert r.status_code == 200
+    assert r.json()["items"][0]["detection_class"] == "nao_alface"
+    det.classe = "nao_alface"
+    db.commit()
+    r = client.get(f"/api/detections/{g1.id}", headers=user, params={"class": "nao_alface"})
+    assert r.json()["total"] == 1

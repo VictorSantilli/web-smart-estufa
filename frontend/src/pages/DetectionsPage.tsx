@@ -27,6 +27,7 @@ const classOptions: { value: ClassFilter; label: string }[] = [
   { value: 'saudavel', label: 'Saudável' },
   { value: 'fungico', label: 'Fúngico' },
   { value: 'bacteriano', label: 'Bacteriano' },
+  { value: 'nao_alface', label: 'Não é alface' },
 ];
 
 /** Filtros na URL (?resultado=fungico&inicio=...&fim=...&pagina=2), para poder compartilhar o link. */
@@ -34,7 +35,9 @@ function useDetectionParams() {
   const [params, setParams] = useSearchParams();
   const rawClass = params.get('resultado');
   const detectionClass: ClassFilter =
-    rawClass === 'saudavel' || rawClass === 'fungico' || rawClass === 'bacteriano' ? rawClass : 'all';
+    rawClass === 'saudavel' || rawClass === 'fungico' || rawClass === 'bacteriano' || rawClass === 'nao_alface'
+      ? rawClass
+      : 'all';
   const start = params.get('inicio') ?? '';
   const end = params.get('fim') ?? '';
   const page = Math.max(1, Number(params.get('pagina')) || 1);

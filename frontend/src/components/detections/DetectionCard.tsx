@@ -5,7 +5,7 @@ import type { Detection } from '@/types/detection';
 import { formatDateTime } from '@/utils/datetime';
 
 import { DetectionImage } from './DetectionImage';
-import { CLASS_INFO, formatPercent } from './detectionFormat';
+import { classInfo, formatPercent } from './detectionFormat';
 
 interface DetectionCardProps {
   detection: Detection;
@@ -13,7 +13,7 @@ interface DetectionCardProps {
 }
 
 export function DetectionCard({ detection, onOpen }: DetectionCardProps) {
-  const info = CLASS_INFO[detection.detection_class];
+  const info = classInfo(detection.detection_class);
   const when = formatDateTime(detection.detected_at);
   return (
     <button

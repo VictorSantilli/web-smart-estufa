@@ -116,6 +116,15 @@ describe('DetectionsPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('exibe resultados fora das três classes sem quebrar', async () => {
+    vi.spyOn(detectionService, 'listDetections').mockResolvedValue(
+      page([detection({ detection_class: 'nao_alface', alert: false }), detection({ id: 2, detection_class: 'folha_seca', alert: false })]),
+    );
+    renderPage();
+    expect(await screen.findByText('Não é alface', { selector: 'span' })).toBeInTheDocument();
+    expect(screen.getByText('Folha seca')).toBeInTheDocument();
+  });
+
   it('mostra quando não há detecções', async () => {
     vi.spyOn(detectionService, 'listDetections').mockResolvedValue(page([]));
     renderPage();
