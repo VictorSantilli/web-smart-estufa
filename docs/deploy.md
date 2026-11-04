@@ -78,6 +78,16 @@ echo "AZURE_TENANT_ID=$(az account show --query tenantId -o tsv)"
 echo "AZURE_SUBSCRIPTION_ID=$SUB"
 ```
 
+> **Se o login falhar com `AADSTS700213: No matching federated identity record`:** o GitHub pode enviar o
+> subject com os IDs numéricos do dono e do repositório (ex.: `repo:VictorSantilli@130602837/web-smart-estufa@1444968785:environment:production`).
+> Copie o valor de "subject claim" do log do passo *Login no Azure* e crie uma credencial com ele:
+>
+> ```bash
+> az identity federated-credential create -g rg-smart-estufa-web --identity-name smart-estufa-github -n github-production-v2 \
+>   --issuer https://token.actions.githubusercontent.com \
+>   --subject "<subject claim do log>" --audiences api://AzureADTokenExchange
+> ```
+
 ## 3. GitHub: ambiente "production"
 
 Em *Settings → Environments → New environment* crie **production** e cadastre:
